@@ -13,15 +13,19 @@ limitations under the License.
 
 package service
 
-import "fmt"
+import (
+	"encoding/json"
+	"net/http"
+)
 
-// Config holds the parameters list which can be configured
-type Config struct {
-	Address     string // service address
-	Port        int    // service port
-	RequestRoot string // service request root "/"
-}
+func (service *Service) listDatasetsHandler(writer http.ResponseWriter, request *http.Request) {
+	service.CreateDB()
 
-func (service *Service) MakeServiceAddress() string {
-	return fmt.Sprintf("%s:%d", service.config.Address, service.config.Port)
+	datasets, err := service.GetAllDatasets()
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+
+	json.NewEncoder(writer).Encode(datasets)
 }

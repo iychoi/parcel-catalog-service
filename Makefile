@@ -31,7 +31,7 @@ GOPATH=$(shell go env GOPATH)
 .PHONY: parcel-catalog-service
 parcel-catalog-service:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags ${LDFLAGS} -o bin/parcel-catalog-service ./cmd/
+	CGO_ENABLED=1 GOOS=linux go build -ldflags ${LDFLAGS} -o bin/parcel-catalog-service ./cmd/
 
 .PHONY: parcel_catalog_service_build
 service_build:

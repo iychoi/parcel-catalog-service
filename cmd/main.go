@@ -43,7 +43,6 @@ func main() {
 
 		if err != nil {
 			log.Fatal(err)
-			os.Exit(1)
 		}
 
 		log.Println(info)
@@ -55,7 +54,6 @@ func main() {
 	svc := service.NewService(&conf)
 	if err := svc.Run(); err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 
 	os.Exit(0)
