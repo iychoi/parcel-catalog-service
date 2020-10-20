@@ -11,23 +11,50 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package service
+package main
 
 import (
-	"encoding/json"
-	"net/http"
+	"flag"
+	"log"
+	"os"
 
 	"github.com/iychoi/parcel-catalog-service/pkg/database"
+	"github.com/iychoi/parcel-catalog-service/pkg/service"
 )
 
-func (service *Service) listDatasetsHandler(writer http.ResponseWriter, request *http.Request) {
-	database.CreateDB()
+func main() {
+	var version bool
 
-	datasets, err := database.GetAllDatasets()
-	if err != nil {
-		http.Error(writer, err.Error(), 500)
-		return
+	// Parse parameters
+	flag.BoolVar(&version, "version", false, "Print service version information")
+
+	flag.Parse()
+
+	// Handle Version
+	if version {
+		info, err := service.GetVersionJSON()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println(info)
+		os.Exit(0)
 	}
 
-	json.NewEncoder(writer).Encode(datasets)
+	datasets, err := database.GetAllDatasets()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	count := 0
+	for _, dataset := range datasets {
+		log.Printf(database.Stringify(dataset))
+		count++
+	}
+
+	log.Printf("Displayed %d datasets\n", count)
+
+	os.Exit(0)
 }

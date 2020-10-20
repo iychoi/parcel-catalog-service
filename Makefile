@@ -31,7 +31,9 @@ GOPATH=$(shell go env GOPATH)
 .PHONY: parcel-catalog-service
 parcel-catalog-service:
 	mkdir -p bin
-	CGO_ENABLED=1 GOOS=linux go build -ldflags ${LDFLAGS} -o bin/parcel-catalog-service ./cmd/
+	CGO_ENABLED=1 GOOS=linux go build -ldflags ${LDFLAGS} -o bin/parcel-catalog-service ./cmd/main.go
+	CGO_ENABLED=1 GOOS=linux go build -ldflags ${LDFLAGS} -o bin/admin_add_dataset ./cmd/admin_add_dataset.go
+	CGO_ENABLED=1 GOOS=linux go build -ldflags ${LDFLAGS} -o bin/admin_list_dataset ./cmd/admin_list_datasets.go
 
 .PHONY: parcel_catalog_service_build
 service_build:

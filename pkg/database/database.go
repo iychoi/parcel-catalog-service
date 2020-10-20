@@ -11,10 +11,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package service
+package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"os"
 
@@ -22,18 +23,18 @@ import (
 )
 
 type Dataset struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"` // contain space
-	Creator     string `json:"creator"`
-	Description string `json:"description"`
-	URL         string `json:"url"`  // e.g., irods://xxx or https://
-	Host        string `json:"host"` // e.g., CyVerse
-	Rights      string `json:"rights"`
-	Tags        string `json:"tags"` // has json string in it
+	ID          int64             `json:"id"`
+	Name        string            `json:"name"` // contain space
+	Creator     string            `json:"creator"`
+	Description string            `json:"description"`
+	URL         string            `json:"url"`  // e.g., irods://xxx or https://
+	Host        string            `json:"host"` // e.g., CyVerse
+	Rights      string            `json:"rights"`
+	Tags        map[string]string `json:"tags"`
 }
 
 const (
-	DB_FILE_NAME = "parcel.db"
+	DBFileName = "parcel.db"
 )
 
 // Tags can have folowing additional data
@@ -47,17 +48,17 @@ func fileExists(filename string) bool {
 }
 
 // CreateDB creates a new database
-func (service *Service) CreateDB() {
-	if !fileExists(DB_FILE_NAME) {
+func CreateDB() {
+	if !fileExists(DBFileName) {
 		log.Println("file not exists")
 
-		file, err := os.Create(DB_FILE_NAME)
+		file, err := os.Create(DBFileName)
 		if err != nil {
 			log.Fatal(err)
 		}
 		file.Close()
 
-		sqlite, _ := sql.Open("sqlite3", DB_FILE_NAME)
+		sqlite, _ := sql.Open("sqlite3", DBFileName)
 		defer sqlite.Close()
 
 		// create a table
@@ -88,7 +89,7 @@ func (service *Service) CreateDB() {
 
 // openDatabase opens database safely
 func openDatabase() (*sql.DB, error) {
-	sqlite, _ := sql.Open("sqlite3", DB_FILE_NAME)
+	sqlite, _ := sql.Open("sqlite3", DBFileName)
 	return sqlite, nil
 }
 
@@ -98,8 +99,39 @@ func closeDatabase(sqlite *sql.DB) error {
 	return nil
 }
 
+// AddDataset adds a dataset
+func AddDataset(dataset *Dataset) error {
+	sqlite, err := openDatabase()
+	if err != nil {
+		return err
+	}
+
+	defer closeDatabase(sqlite)
+
+	sql := "INSERT INTO dataset (name, creator, description, url, host, rights, tags) VALUES(?, ?, ?, ?, ?, ?, ?);"
+	statement, err := sqlite.Prepare(sql)
+	if err != nil {
+		return err
+	}
+
+	jsonBytes, err := json.Marshal(dataset.Tags)
+	if err != nil {
+		return err
+	}
+
+	result, err := statement.Exec(dataset.Name, dataset.Creator, dataset.Description, dataset.URL, dataset.Host, dataset.Rights, jsonBytes)
+	if err != nil {
+		return err
+	}
+
+	newid, _ := result.LastInsertId()
+	dataset.ID = newid
+
+	return nil
+}
+
 // GetAllDatasets returns all datasets
-func (service *Service) GetAllDatasets() ([]*Dataset, error) {
+func GetAllDatasets() ([]*Dataset, error) {
 	sqlite, err := openDatabase()
 	if err != nil {
 		return nil, err
@@ -121,14 +153,37 @@ func (service *Service) GetAllDatasets() ([]*Dataset, error) {
 	datasets := []*Dataset{}
 	for rows.Next() {
 		var dataset Dataset
+		var tags string
 
-		err := rows.Scan(&dataset.ID, &dataset.Name, &dataset.Creator, &dataset.Description, &dataset.URL, &dataset.Host, &dataset.Rights, &dataset.Tags)
+		err := rows.Scan(&dataset.ID, &dataset.Name, &dataset.Creator, &dataset.Description, &dataset.URL, &dataset.Host, &dataset.Rights, &tags)
 		if err != nil {
 			return nil, err
+		}
+
+		dataset.Tags = make(map[string]string)
+
+		if len(tags) > 0 {
+			err = json.Unmarshal([]byte(tags), &dataset.Tags)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		datasets = append(datasets, &dataset)
 	}
 
 	return datasets, nil
+}
+
+// Objectify returns Dataset from json byte array
+func Objectify(jsonBytes []byte) *Dataset {
+	var dataset Dataset
+	json.Unmarshal(jsonBytes, &dataset)
+	return &dataset
+}
+
+// Stringify returns string from Dataset
+func Stringify(dataset *Dataset) string {
+	jsonBytes, _ := json.Marshal(dataset)
+	return string(jsonBytes)
 }

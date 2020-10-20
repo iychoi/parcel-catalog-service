@@ -15,24 +15,18 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 
+	"github.com/iychoi/parcel-catalog-service/pkg/database"
 	"github.com/iychoi/parcel-catalog-service/pkg/service"
-)
-
-var (
-	conf service.Config
 )
 
 func main() {
 	var version bool
 
 	// Parse parameters
-	flag.StringVar(&conf.Address, "address", "", "service address")
-	flag.IntVar(&conf.Port, "port", 80, "service port number")
-	flag.StringVar(&conf.RequestRoot, "requestRoot", "/", "service request root dir")
-
 	flag.BoolVar(&version, "version", false, "Print service version information")
 
 	flag.Parse()
@@ -49,12 +43,32 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Printf("Service version: %s", service.GetServiceVersion())
+	args := flag.Args()
 
-	svc := service.NewService(&conf)
-	if err := svc.Run(); err != nil {
+	if len(args) == 0 {
+		log.Fatal("Give a json file as an argument")
+	}
+
+	jsonPath := args[0]
+	jsonFile, err := os.Open(jsonPath)
+	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer jsonFile.Close()
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dataset := database.Objectify(byteValue)
+	err = database.AddDataset(dataset)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Added a new dataset '%s'\n", dataset.Name)
 
 	os.Exit(0)
 }
