@@ -19,28 +19,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/iychoi/parcel-catalog-service/pkg/dataset"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-type Dataset struct {
-	ID          int64             `json:"id"`
-	Name        string            `json:"name"` // contain space
-	Creator     string            `json:"creator"`
-	Description string            `json:"description"`
-	URL         string            `json:"url"`  // e.g., irods://xxx or https://
-	Host        string            `json:"host"` // e.g., CyVerse
-	Rights      string            `json:"rights"`
-	Tags        map[string]string `json:"tags"`
-}
 
 const (
 	DBFileName = "parcel.db"
 )
-
-// Tags can have folowing additional data
-// - citation
-// - doi
-// - publication year
 
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
@@ -100,7 +85,7 @@ func closeDatabase(sqlite *sql.DB) error {
 }
 
 // AddDataset adds a dataset
-func AddDataset(dataset *Dataset) error {
+func AddDataset(dataset *dataset.Dataset) error {
 	sqlite, err := openDatabase()
 	if err != nil {
 		return err
@@ -131,7 +116,7 @@ func AddDataset(dataset *Dataset) error {
 }
 
 // GetAllDatasets returns all datasets
-func GetAllDatasets() ([]*Dataset, error) {
+func GetAllDatasets() ([]*dataset.Dataset, error) {
 	sqlite, err := openDatabase()
 	if err != nil {
 		return nil, err
@@ -150,9 +135,9 @@ func GetAllDatasets() ([]*Dataset, error) {
 		return nil, err
 	}
 
-	datasets := []*Dataset{}
+	datasets := []*dataset.Dataset{}
 	for rows.Next() {
-		var dataset Dataset
+		var dataset dataset.Dataset
 		var tags string
 
 		err := rows.Scan(&dataset.ID, &dataset.Name, &dataset.Creator, &dataset.Description, &dataset.URL, &dataset.Host, &dataset.Rights, &tags)
@@ -173,17 +158,4 @@ func GetAllDatasets() ([]*Dataset, error) {
 	}
 
 	return datasets, nil
-}
-
-// Objectify returns Dataset from json byte array
-func Objectify(jsonBytes []byte) *Dataset {
-	var dataset Dataset
-	json.Unmarshal(jsonBytes, &dataset)
-	return &dataset
-}
-
-// Stringify returns string from Dataset
-func Stringify(dataset *Dataset) string {
-	jsonBytes, _ := json.Marshal(dataset)
-	return string(jsonBytes)
 }

@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/iychoi/parcel-catalog-service/pkg/database"
+	"github.com/iychoi/parcel-catalog-service/pkg/dataset"
 	"github.com/iychoi/parcel-catalog-service/pkg/service"
 )
 
@@ -49,8 +50,8 @@ func main() {
 	}
 
 	count := 0
-	for _, dataset := range datasets {
-		log.Printf(database.Stringify(dataset))
+	for _, ds := range datasets {
+		log.Printf(dataset.Stringify(ds))
 		count++
 	}
 

@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/iychoi/parcel-catalog-service/pkg/database"
+	"github.com/iychoi/parcel-catalog-service/pkg/dataset"
 	"github.com/iychoi/parcel-catalog-service/pkg/service"
 )
 
@@ -62,13 +63,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dataset := database.Objectify(byteValue)
-	err = database.AddDataset(dataset)
+	ds := dataset.Objectify(byteValue)
+	err = database.AddDataset(ds)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Added a new dataset '%s'\n", dataset.Name)
+	log.Printf("Added a new dataset '%s'\n", ds.Name)
 
 	os.Exit(0)
 }
