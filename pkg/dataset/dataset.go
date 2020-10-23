@@ -35,9 +35,21 @@ type Dataset struct {
 
 // Objectify returns Dataset from json byte array
 func Objectify(jsonBytes []byte) *Dataset {
-	var dataset Dataset
-	json.Unmarshal(jsonBytes, &dataset)
-	return &dataset
+	var ds Dataset
+	json.Unmarshal(jsonBytes, &ds)
+	return &ds
+}
+
+func Listify(jsonBytes []byte) []*Dataset {
+	var ds []Dataset
+	json.Unmarshal(jsonBytes, &ds)
+
+	dsp := []*Dataset{}
+	for _, d := range ds {
+		dsp = append(dsp, &d)
+	}
+
+	return dsp
 }
 
 // Stringify returns string from Dataset
