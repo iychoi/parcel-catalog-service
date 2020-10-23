@@ -15,6 +15,9 @@ package dataset
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
 )
 
 // Dataset contains information about a dataset
@@ -33,6 +36,71 @@ type Dataset struct {
 	Tags        map[string]string `json:"tags"`
 }
 
+// PrintDataset prints dataset
+func (ds *Dataset) PrintDataset(short bool, maxDescriptionLen int) {
+	if short {
+		fmt.Printf("[%d] %s\n", ds.ID, ds.Name)
+		fmt.Printf("  Creator     : %s\n", ds.Creator)
+		fmt.Printf("  Rights      : %s\n", ds.Rights)
+		if len(ds.Description) > maxDescriptionLen {
+			fmt.Printf("  Description : %s...[more]\n", ds.Description[:maxDescriptionLen])
+		} else {
+			fmt.Printf("  Description : %s\n", ds.Description)
+		}
+	} else {
+		fmt.Printf("[%d] %s\n", ds.ID, ds.Name)
+		fmt.Printf("  Name        : %s\n", ds.Name)
+		fmt.Printf("  Creator     : %s\n", ds.Creator)
+		fmt.Printf("  Host        : %s\n", ds.Host)
+		fmt.Printf("  Description : %s\n", ds.Description)
+		fmt.Printf("  Rights      : %s\n", ds.Rights)
+		fmt.Printf("  URL         : %s\n", ds.URL)
+		for k, v := range ds.Tags {
+			fmt.Printf("  %-12s: %s\n", k, v)
+		}
+	}
+}
+
+// ContainsKeywords checks if the dataset has the given keywords
+func (ds *Dataset) ContainsKeywords(keywords []string) bool {
+	for _, keyword := range keywords {
+		if keyword == strconv.FormatInt(ds.ID, 10) {
+			return true
+		}
+
+		if strings.Contains(strings.ToLower(ds.Name), strings.ToLower(keyword)) {
+			return true
+		}
+
+		if strings.Contains(strings.ToLower(ds.Creator), strings.ToLower(keyword)) {
+			return true
+		}
+
+		if strings.Contains(strings.ToLower(ds.Host), strings.ToLower(keyword)) {
+			return true
+		}
+
+		if strings.Contains(strings.ToLower(ds.Description), strings.ToLower(keyword)) {
+			return true
+		}
+
+		if strings.Contains(strings.ToLower(ds.Rights), strings.ToLower(keyword)) {
+			return true
+		}
+
+		if strings.Contains(strings.ToLower(ds.URL), strings.ToLower(keyword)) {
+			return true
+		}
+
+		for _, v := range ds.Tags {
+			if strings.Contains(strings.ToLower(v), strings.ToLower(keyword)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Objectify returns Dataset from json byte array
 func Objectify(jsonBytes []byte) *Dataset {
 	var ds Dataset
@@ -40,6 +108,7 @@ func Objectify(jsonBytes []byte) *Dataset {
 	return &ds
 }
 
+// Listify returns Dataset array from json byte array
 func Listify(jsonBytes []byte) []*Dataset {
 	var ds []Dataset
 	json.Unmarshal(jsonBytes, &ds)
